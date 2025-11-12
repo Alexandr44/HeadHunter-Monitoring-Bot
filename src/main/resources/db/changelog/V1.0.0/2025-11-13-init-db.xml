@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                   https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <changeSet id="2025-11-13-init-db" author="alexandr.glukhov">
+        <sql>
+            CREATE TABLE users
+            (
+                id           BIGINT PRIMARY KEY,
+                username     VARCHAR(255) NOT NULL,
+                user_chat_id BIGINT       NOT NULL,
+                is_active    BOOLEAN      NOT NULL,
+                search_text  VARCHAR(255),
+                exclude_text  VARCHAR(255),
+                created_at   TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at   TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            );
+
+            CREATE TABLE vacancies_ids
+            (
+                id         BIGINT PRIMARY KEY,
+                vacancy_id BIGINT NOT NULL,
+                user_id    BIGINT NOT NULL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            );
+        </sql>
+    </changeSet>
+</databaseChangeLog>

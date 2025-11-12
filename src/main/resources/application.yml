@@ -2,6 +2,17 @@ spring:
   application:
     name: HeadHunterMonitorBot
 
+  datasource:
+    driver-class-name: org.sqlite.JDBC
+    url: jdbc:sqlite:data/hh_monitor_data.db
+    username: ""
+    password: ""
+    hikari:
+      schema: feature_toggle
+  liquibase:
+    enabled: true
+    change-log: classpath:db/changelog/db.changelog-master-local.xml
+
 scheduler:
-  cron: "0 */30 * * * *"
-#  cron: "*/15 * * * * *"
+#  cron: "0 */30 * * * *"
+  cron: "*/15 * * * * *"

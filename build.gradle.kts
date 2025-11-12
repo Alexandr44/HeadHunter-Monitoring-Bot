@@ -25,7 +25,7 @@ extra["springCloudVersion"] = "2025.0.0"
 
 dependencies {
     implementation("org.springframework.boot:spring-boot-starter-web")
-//    implementation("org.springframework.boot:spring-boot-starter-data-jpa")
+    implementation("org.springframework.boot:spring-boot-starter-data-jpa")
     implementation("org.springframework.cloud:spring-cloud-starter-openfeign")
 
     implementation("org.jetbrains.kotlin:kotlin-reflect")
@@ -35,7 +35,11 @@ dependencies {
 
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
 
-//    implementation("org.liquibase:liquibase-core")
+    // Liquibase
+    implementation("org.liquibase:liquibase-core")
+    implementation("org.xerial:sqlite-jdbc")
+
+    implementation("org.hibernate.orm:hibernate-community-dialects")
 
     implementation("io.github.microutils:kotlin-logging-jvm:3.0.5")
 
