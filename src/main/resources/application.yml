@@ -14,11 +14,11 @@ spring:
     change-log: classpath:db/changelog/db.changelog-master-local.xml
 
 scheduler:
-#  cron: "0 */30 * * * *"
-  cron: "*/15 * * * * *"
   cron: "0 */30 * * * *"
 #  cron: "*/15 * * * * *"
 
 telegrambot:
   bot:
     username: HeadHunterMonitorBot
+    token: "<TG BOT TOKEN>"
+    support_chat_id: "<SUPPORT GROUP CHAT ID>"
