@@ -8,19 +8,20 @@
         <sql>
             CREATE TABLE users
             (
-                id           BIGINT PRIMARY KEY,
+                id           INTEGER PRIMARY KEY AUTOINCREMENT,
                 username     VARCHAR(255) NOT NULL,
                 user_chat_id BIGINT       NOT NULL,
                 is_active    BOOLEAN      NOT NULL,
                 search_text  VARCHAR(255),
-                exclude_text  VARCHAR(255),
+                exclude_text VARCHAR(255),
+                user_state   VARCHAR(255),
                 created_at   TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 updated_at   TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             );
 
             CREATE TABLE vacancies_ids
             (
-                id         BIGINT PRIMARY KEY,
+                id         INTEGER PRIMARY KEY AUTOINCREMENT,
                 vacancy_id BIGINT NOT NULL,
                 user_id    BIGINT NOT NULL,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,

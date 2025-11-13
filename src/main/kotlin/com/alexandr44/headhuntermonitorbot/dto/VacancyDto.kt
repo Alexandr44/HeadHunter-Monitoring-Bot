@@ -8,7 +8,8 @@ data class VacancyDto(
     val name: String,
     @JsonProperty("published_at")
     val publishedAt: OffsetDateTime,
-    val url: String,
+    @JsonProperty("alternate_url")
+    val alternateUrl: String,
     val employer: EmployerDto,
     val salary: SalaryDto?,
     @JsonProperty("salary_range")

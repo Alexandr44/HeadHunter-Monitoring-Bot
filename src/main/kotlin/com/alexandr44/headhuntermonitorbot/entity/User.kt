@@ -1,5 +1,6 @@
 package com.alexandr44.headhuntermonitorbot.entity
 
+import com.alexandr44.headhuntermonitorbot.enums.UserState
 import jakarta.persistence.*
 import org.springframework.data.annotation.CreatedDate
 import org.springframework.data.annotation.LastModifiedDate
@@ -31,6 +32,10 @@ class User(
     @Column(nullable = false, name = "exclude_text", length = 255)
     var excludeText: String,
 
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, name = "user_state", length = 255)
+    var userState: UserState,
+
     @CreatedDate
     @Column(nullable = false, updatable = false)
     var createdAt: Instant? = null,
@@ -46,6 +51,7 @@ class User(
         userChatId = 0,
         active = true,
         searchText = "",
-        excludeText = ""
+        excludeText = "",
+        userState = UserState.OK
     )
 }
