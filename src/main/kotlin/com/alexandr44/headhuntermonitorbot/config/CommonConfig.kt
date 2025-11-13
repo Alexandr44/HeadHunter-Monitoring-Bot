@@ -1,0 +1,9 @@
+package com.alexandr44.headhuntermonitorbot.config
+
+import com.alexandr44.headhuntermonitorbot.telegram.properties.TelegramBotProperties
+import org.springframework.boot.context.properties.EnableConfigurationProperties
+import org.springframework.context.annotation.Configuration
+
+@Configuration
+@EnableConfigurationProperties(TelegramBotProperties::class)
+class CommonConfig
