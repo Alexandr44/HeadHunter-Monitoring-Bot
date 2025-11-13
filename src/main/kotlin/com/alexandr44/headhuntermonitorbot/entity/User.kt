@@ -20,7 +20,7 @@ class User(
     var username: String,
 
     @Column(nullable = false, name = "user_chat_id", length = 255)
-    var userChatId: String,
+    var userChatId: Long,
 
     @Column(nullable = false, name = "is_active")
     var active: Boolean,
@@ -43,7 +43,7 @@ class User(
 
     constructor() : this(
         username = "",
-        userChatId = "",
+        userChatId = 0,
         active = true,
         searchText = "",
         excludeText = ""

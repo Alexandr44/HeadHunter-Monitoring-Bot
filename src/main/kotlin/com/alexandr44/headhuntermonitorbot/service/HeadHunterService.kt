@@ -13,7 +13,8 @@ import java.time.OffsetDateTime
 class HeadHunterService(
     val headHunterClient: HeadHunterClient,
     val userRepository: UserRepository,
-    val vacancyIdRepository: VacancyIdRepository
+    val vacancyIdRepository: VacancyIdRepository,
+    val telegramService: TelegramService
 ) {
 
     companion object {
@@ -28,16 +29,21 @@ class HeadHunterService(
         val users = userRepository.findAllByActiveIsTrue()
 
         for (user in users) {
+            if (user.searchText.isBlank()) {
+                continue
+            }
+
             log.info("Processing users: ${user.username}")
             val checkedVacanciesIds = vacancyIdRepository.findAllByUserId(user.id!!).map { it.id }
 
-            val excludeWords = user.excludeText.split(",")
+            val excludeWords = user.excludeText.split(",").map { it.trim() }
             val vacancies = getVacanciesForToday(user.searchText)
                 .filter { vacancyDto -> !excludeWords.any { vacancyDto.name.contains(it, ignoreCase = true) } }
                 .filter { vacancyDto -> !checkedVacanciesIds.contains(vacancyDto.id) }
 
-            log.info("Got response: ${vacancies}")
-            //TODO: Send messages
+            log.info("Vacancies: ${vacancies.size}")
+
+            telegramService.sendVacancies(vacancies, user.userChatId)
 
             vacancyIdRepository.saveAll(
                 vacancies.map { vacancy ->
