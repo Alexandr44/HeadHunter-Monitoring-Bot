@@ -29,7 +29,11 @@ class HeadHunterCommandHandler(
             userService.addNewUser(chatId, message.from.userName)
             val toSupport = SendMessage()
             toSupport.chatId = supportChatId
-            toSupport.text = "Новый пользователь: " + userId + " " + message.from.userName
+            toSupport.text = """
+                            🆘 Новый пользователь:
+                            👤 ID: %d
+                            🔗 @%s
+                            """.trimIndent().format(userId, message.from.userName ?: "без username")
             execute.invoke(toSupport)
             val msg = SendMessage(
                 chatId.toString(),
@@ -43,19 +47,36 @@ class HeadHunterCommandHandler(
         } else {
             if (!handleMenuButtons(text, chatId, userId, execute)) {
                 when (userService.getUserState(userId)) {
-                    UserState.OK -> execute(SendMessage(chatId.toString(), "Пу-пу-пу..."))
+                    UserState.OK -> execute(
+                        SendMessage().apply {
+                            this.chatId = chatId.toString()
+                            this.text = "Пу-пу-пу..."
+                            this.replyMarkup = menuBuilder.mainMenu()
+                        }
+                    )
+
                     UserState.SEARCH_TEXT -> {
-                        val searchText = message.from.userName.trim()
-                        userService.setSearchText(userId, searchText)
+                        userService.setSearchText(userId, text)
                         userService.saveUserState(userId, UserState.OK)
-                        execute(SendMessage(chatId.toString(), "Поисковое слово: $searchText"))
+                        execute(
+                            SendMessage().apply {
+                                this.chatId = chatId.toString()
+                                this.text = "Поисковое слово: $text"
+                                this.replyMarkup = menuBuilder.mainMenu()
+                            }
+                        )
                     }
 
                     UserState.EXCLUDE_TEXT -> {
-                        val excludeText = message.from.userName.trim()
-                        userService.setExcludeText(userId, excludeText)
+                        userService.setExcludeText(userId, text)
                         userService.saveUserState(userId, UserState.OK)
-                        execute(SendMessage(chatId.toString(), "Исключающие слова: $excludeText"))
+                        execute(
+                            SendMessage().apply {
+                                this.chatId = chatId.toString()
+                                this.text = "Исключающие слова: $text"
+                                this.replyMarkup = menuBuilder.mainMenu()
+                            }
+                        )
                     }
 
                     UserState.SUPPORT_MESSAGE -> {
@@ -66,10 +87,13 @@ class HeadHunterCommandHandler(
                             💬 %s
                             """.trimIndent().format(userId, message.from.userName ?: "без username", text)
 
-                        val toSupport = SendMessage()
-                        toSupport.chatId = supportChatId
-                        toSupport.text = supportMsg
-                        execute.invoke(toSupport)
+                        execute.invoke(
+                            SendMessage().apply {
+                                this.chatId = supportChatId
+                                this.text = supportMsg
+                                this.replyMarkup = menuBuilder.mainMenu()
+                            }
+                        )
                         userService.saveUserState(userId, UserState.OK)
                         execute(SendMessage(chatId.toString(), "✅ Сообщение отправлено в поддержку. Спасибо!"))
                     }

@@ -33,25 +33,28 @@ class HeadHunterService(
                 continue
             }
 
-            log.info("Processing users: ${user.username}")
-            val checkedVacanciesIds = vacancyIdRepository.findAllByUserId(user.id!!).map { it.vacancyId }
+            val texts = user.searchText.split(";").map { it.trim() }
+            for (text in texts) {
+                log.info("Processing users: ${user.username}")
+                val checkedVacanciesIds = vacancyIdRepository.findAllByUserId(user.id!!).map { it.vacancyId }
 
-            val excludeWords = user.excludeText.split(",").map { it.trim() }
-            val vacancies = getVacanciesForToday(user.searchText)
-                .filter { vacancyDto -> !excludeWords.any { vacancyDto.name.contains(it, ignoreCase = true) } }
-                .filter { vacancyDto -> !checkedVacanciesIds.contains(vacancyDto.id) }
+                val excludeWords = user.excludeText.split(",").map { it.trim() }
+                val vacancies = getVacanciesForToday(text)
+                    .filter { vacancyDto -> !excludeWords.any { vacancyDto.name.contains(it, ignoreCase = true) } }
+                    .filter { vacancyDto -> !checkedVacanciesIds.contains(vacancyDto.id) }
 
-            log.info("Vacancies: ${vacancies.size}")
-            telegramService.sendVacancies(vacancies, user.userChatId)
+                log.info("Vacancies: ${vacancies.size}")
+                telegramService.sendVacancies(vacancies, user.userChatId)
 
-            vacancyIdRepository.saveAll(
-                vacancies.map { vacancy ->
-                    VacancyId(
-                        vacancyId = vacancy.id,
-                        userId = user.id!!,
-                    )
-                }
-            )
+                vacancyIdRepository.saveAll(
+                    vacancies.map { vacancy ->
+                        VacancyId(
+                            vacancyId = vacancy.id,
+                            userId = user.id!!,
+                        )
+                    }
+                )
+            }
         }
     }
 
