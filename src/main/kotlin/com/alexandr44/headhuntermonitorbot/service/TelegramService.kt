@@ -26,14 +26,16 @@ class TelegramService(
                 "Не указано"
             }
 
-        val builder = StringBuilder()
-        builder.append("Новая вакансия")
-            .append(vacancyDto.name)
-            .append("Компания: ${vacancyDto.employer.name}")
-            .append("ЗП: $salaryMsg")
-            .append(vacancyDto.url)
+        val message = """
+            *Новая вакансия!*
+            *${vacancyDto.name}*
+            Компания: _${vacancyDto.employer.name}_
+            💰 ЗП: $salaryMsg
+            🔗 [Открыть вакансию](${vacancyDto.alternateUrl})
+        """.trimIndent()
 
-        val msg = SendMessage(chatId.toString(), builder.toString())
+        val msg = SendMessage(chatId.toString(), message)
+        msg.parseMode = "Markdown"
         telegramBot.execute(msg)
     }
 
