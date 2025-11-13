@@ -16,3 +16,9 @@ spring:
 scheduler:
 #  cron: "0 */30 * * * *"
   cron: "*/15 * * * * *"
+  cron: "0 */30 * * * *"
+#  cron: "*/15 * * * * *"
+
+telegrambot:
+  bot:
+    username: HeadHunterMonitorBot
