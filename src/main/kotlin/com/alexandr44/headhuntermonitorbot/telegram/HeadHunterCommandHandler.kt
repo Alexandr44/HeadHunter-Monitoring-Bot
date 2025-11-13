@@ -1,31 +1,24 @@
 package com.alexandr44.headhuntermonitorbot.telegram
 
 import com.alexandr44.headhuntermonitorbot.dto.Constants
-import mu.KotlinLogging
+import com.alexandr44.headhuntermonitorbot.enums.UserState
+import com.alexandr44.headhuntermonitorbot.service.UserService
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
-import org.telegram.telegrambots.meta.api.methods.GetFile
 import org.telegram.telegrambots.meta.api.methods.botapimethods.BotApiMethodMessage
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage
-import org.telegram.telegrambots.meta.api.objects.File
 import org.telegram.telegrambots.meta.api.objects.Message
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException
 
 
 @Service
 class HeadHunterCommandHandler(
-    val menuBuilder: HeadHunterBotMenuBuilder,
-//    val printService: PrintService,
-//    val userService: UserService,
+    private val menuBuilder: HeadHunterBotMenuBuilder,
+    private val userService: UserService,
 ) {
-
-    private val log = KotlinLogging.logger {}
 
     @Value("\${telegrambot.bot.support_chat_id}")
     private lateinit var supportChatId: String
-
-    @Value("\${telegrambot.bot.token}")
-    private lateinit var botToken: String
 
     fun handleTextMessage(message: Message, execute: (BotApiMethodMessage) -> Message) {
         val chatId: Long = message.chatId
@@ -33,33 +26,55 @@ class HeadHunterCommandHandler(
         val userId: Long = message.from.id
 
         if (text == "/start") {
-            val msg = SendMessage(chatId.toString(), "Добро пожаловать! Пропишите поисковое слово и включите мониторинг для получения вакансий")
+            userService.addNewUser(chatId, message.from.userName)
+            val toSupport = SendMessage()
+            toSupport.chatId = supportChatId
+            toSupport.text = "Новый пользователь: " + userId + " " + message.from.userName
+            execute.invoke(toSupport)
+            val msg = SendMessage(
+                chatId.toString(),
+                "Добро пожаловать! Пропишите поисковое слово и включите мониторинг для получения вакансий"
+            )
             msg.replyMarkup = menuBuilder.mainMenu()
             execute(msg)
             return
         } else if (text.startsWith("/reply")) {
             handleReplyMessage(text, execute)
         } else {
-//            if (!handleMenuButtons(text, chatId, userId, execute)) {
-//                when(userService.getUserState(userId)) {
-//                    UserState.OK -> execute(SendMessage(chatId.toString(), "Ничего не знаю, файл давай"))
-//                    UserState.SUPPORT_MESSAGE -> {
-//                        val supportMsg = """
-//                            🆘 Новое сообщение от пользователя:
-//                            👤 ID: %d
-//                            🔗 @%s
-//                            💬 %s
-//                            """.trimIndent().format(userId, message.from.userName ?: "без username", text)
-//
-//                        val toSupport = SendMessage()
-//                        toSupport.chatId = supportChatId
-//                        toSupport.text = supportMsg
-//                        execute.invoke(toSupport)
-//                        userService.setUserState(userId, UserState.OK)
-//                        execute(SendMessage(chatId.toString(), "✅ Сообщение отправлено в поддержку. Спасибо!"))
-//                    }
-//                }
-//            }
+            if (!handleMenuButtons(text, chatId, userId, execute)) {
+                when (userService.getUserState(userId)) {
+                    UserState.OK -> execute(SendMessage(chatId.toString(), "Пу-пу-пу..."))
+                    UserState.SEARCH_TEXT -> {
+                        val searchText = message.from.userName.trim()
+                        userService.setSearchText(userId, searchText)
+                        userService.saveUserState(userId, UserState.OK)
+                        execute(SendMessage(chatId.toString(), "Поисковое слово: $searchText"))
+                    }
+
+                    UserState.EXCLUDE_TEXT -> {
+                        val excludeText = message.from.userName.trim()
+                        userService.setExcludeText(userId, excludeText)
+                        userService.saveUserState(userId, UserState.OK)
+                        execute(SendMessage(chatId.toString(), "Исключающие слова: $excludeText"))
+                    }
+
+                    UserState.SUPPORT_MESSAGE -> {
+                        val supportMsg = """
+                            🆘 Новое сообщение от пользователя:
+                            👤 ID: %d
+                            🔗 @%s
+                            💬 %s
+                            """.trimIndent().format(userId, message.from.userName ?: "без username", text)
+
+                        val toSupport = SendMessage()
+                        toSupport.chatId = supportChatId
+                        toSupport.text = supportMsg
+                        execute.invoke(toSupport)
+                        userService.saveUserState(userId, UserState.OK)
+                        execute(SendMessage(chatId.toString(), "✅ Сообщение отправлено в поддержку. Спасибо!"))
+                    }
+                }
+            }
         }
     }
 
@@ -92,21 +107,21 @@ class HeadHunterCommandHandler(
         when (text) {
 
             Constants.MENU_ENTER_SEARCH_TEXT -> {
-//                userService.setUserPageLayout(userId, PageLayout.ONE)
-//                val msg = SendMessage(chatId.toString(), "Выбрана печать 1 страница на 1")
-//                execute(msg)
+                userService.saveUserState(userId, UserState.SEARCH_TEXT)
+                val msg = SendMessage(chatId.toString(), "ВВедите текст для поиска")
+                execute(msg)
             }
 
             Constants.MENU_ENTER_EXCLUDE_TEXT -> {
-//                userService.setUserPageLayout(userId, PageLayout.TWO)
-//                val msg = SendMessage(chatId.toString(), "Выбрана печать 2 страницы на 1")
-//                execute(msg)
+                userService.saveUserState(userId, UserState.EXCLUDE_TEXT)
+                val msg = SendMessage(chatId.toString(), "ВВедите исключающие слова, через запятую")
+                execute(msg)
             }
 
             Constants.MENU_SWITCH_MONITORING -> {
-//                userService.setUserPageLayout(userId, PageLayout.FOUR)
-//                val msg = SendMessage(chatId.toString(), "Выбрана печать 4 страницы на 1")
-//                execute(msg)
+                val enabled = userService.switchUser(userId)
+                val msg = SendMessage(chatId.toString(), "Мониторинг " + if (enabled) "включен" else "отключен")
+                execute(msg)
             }
 
             Constants.MENU_SUPPORT -> {
@@ -114,15 +129,14 @@ class HeadHunterCommandHandler(
                         |🧑‍💻 Напишите сообщение в поддержку.
                         |Мы ответим вам как можно скорее.
                         """.trimMargin()
-//                val msg = SendMessage(chatId.toString(), str)
-//                userService.setUserState(userId, UserState.SUPPORT_MESSAGE)
-//                execute(msg)
+                val msg = SendMessage(chatId.toString(), str)
+                userService.saveUserState(userId, UserState.SUPPORT_MESSAGE)
+                execute(msg)
             }
 
             Constants.MENU_HELP -> {
                 val str = """
-                        |🧑‍💻 Пришли мне файлик и я его распечатаю.
-                        |В меню можно выбрать, сколько страниц печатать на одной странице.
+                        |🧑‍💻 Напишите текст для поиска, исключающие слова через запятую и включите мониторинг.
                         """.trimMargin()
                 val msg = SendMessage(chatId.toString(), str)
                 execute(msg)
