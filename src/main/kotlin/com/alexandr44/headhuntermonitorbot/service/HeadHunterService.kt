@@ -2,6 +2,7 @@ package com.alexandr44.headhuntermonitorbot.service
 
 import com.alexandr44.headhuntermonitorbot.client.HeadHunterClient
 import com.alexandr44.headhuntermonitorbot.dto.VacancyDto
+import com.alexandr44.headhuntermonitorbot.entity.VacancyId
 import com.alexandr44.headhuntermonitorbot.repository.UserRepository
 import com.alexandr44.headhuntermonitorbot.repository.VacancyIdRepository
 import mu.KotlinLogging
@@ -28,7 +29,7 @@ class HeadHunterService(
 
         for (user in users) {
             log.info("Processing users: ${user.username}")
-            val checkedVacanciesIds = vacancyIdRepository.findAllByUserId(user.id).map { it.id }
+            val checkedVacanciesIds = vacancyIdRepository.findAllByUserId(user.id!!).map { it.id }
 
             val excludeWords = user.excludeText.split(",")
             val vacancies = getVacanciesForToday(user.searchText)
@@ -36,6 +37,16 @@ class HeadHunterService(
                 .filter { vacancyDto -> !checkedVacanciesIds.contains(vacancyDto.id) }
 
             log.info("Got response: ${vacancies}")
+            //TODO: Send messages
+
+            vacancyIdRepository.saveAll(
+                vacancies.map { vacancy ->
+                    VacancyId(
+                        vacancyId = vacancy.id,
+                        userId = user.id!!,
+                    )
+                }
+            )
         }
     }
 

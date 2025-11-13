@@ -14,7 +14,7 @@ class User(
     @Id
     @Column(nullable = false, updatable = false)
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    var id: Long,
+    var id: Long? = null,
 
     @Column(nullable = false, unique = true, length = 255)
     var username: String,
@@ -42,7 +42,6 @@ class User(
 ) {
 
     constructor() : this(
-        id = 0,
         username = "",
         userChatId = "",
         active = true,

@@ -14,7 +14,7 @@ class VacancyId(
     @Id
     @Column(nullable = false, updatable = false)
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    var id: Long,
+    var id: Long? = null,
 
     @Column(nullable = false, name = "vacancy_id", length = 255)
     var vacancyId: Long,
@@ -33,7 +33,6 @@ class VacancyId(
 ) {
 
     constructor() : this(
-        id = 0,
         vacancyId = 0,
         userId = 0
     )
