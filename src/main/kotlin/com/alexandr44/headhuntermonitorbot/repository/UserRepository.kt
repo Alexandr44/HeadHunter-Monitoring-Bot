@@ -9,4 +9,6 @@ interface UserRepository : JpaRepository<User, Long> {
 
     fun findAllByActiveIsTrue(): List<User>
 
+    fun findByUserChatId(chatId: Long): User
+
 }
