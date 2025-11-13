@@ -7,7 +7,7 @@ import org.telegram.telegrambots.meta.api.methods.send.SendMessage
 
 @Service
 class TelegramService(
-    val telegramBot: TelegramLongPollingBot
+    private val telegramBot: TelegramLongPollingBot
 ) {
 
     fun sendVacancies(vacancyDtoList: List<VacancyDto>, chatId: Long) {

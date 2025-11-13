@@ -11,10 +11,10 @@ import java.time.OffsetDateTime
 
 @Service
 class HeadHunterService(
-    val headHunterClient: HeadHunterClient,
-    val userRepository: UserRepository,
-    val vacancyIdRepository: VacancyIdRepository,
-    val telegramService: TelegramService
+    private val headHunterClient: HeadHunterClient,
+    private val userRepository: UserRepository,
+    private val vacancyIdRepository: VacancyIdRepository,
+    private val telegramService: TelegramService
 ) {
 
     companion object {
