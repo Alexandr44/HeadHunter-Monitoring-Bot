@@ -34,7 +34,7 @@ class HeadHunterService(
             }
 
             log.info("Processing users: ${user.username}")
-            val checkedVacanciesIds = vacancyIdRepository.findAllByUserId(user.id!!).map { it.id }
+            val checkedVacanciesIds = vacancyIdRepository.findAllByUserId(user.id!!).map { it.vacancyId }
 
             val excludeWords = user.excludeText.split(",").map { it.trim() }
             val vacancies = getVacanciesForToday(user.searchText)
@@ -42,7 +42,6 @@ class HeadHunterService(
                 .filter { vacancyDto -> !checkedVacanciesIds.contains(vacancyDto.id) }
 
             log.info("Vacancies: ${vacancies.size}")
-
             telegramService.sendVacancies(vacancies, user.userChatId)
 
             vacancyIdRepository.saveAll(
