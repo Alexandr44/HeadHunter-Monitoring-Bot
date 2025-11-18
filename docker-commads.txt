@@ -1,0 +1,16 @@
+
+sudo docker images
+sudo docker load -i ./headhuntermonitoringbot.tar
+sudo docker run -d \
+  --name headhuntermonitoringbot \
+  --restart unless-stopped \
+  --network host \
+  -v /tmp:/tmp \
+  -v /etc/localtime:/etc/localtime:ro \
+  headhuntermonitoringbot:1.0
+
+sudo docker logs -f headhuntermonitoringbot
+
+sudo docker stop headhuntermonitoringbot
+sudo docker rm headhuntermonitoringbot
+sudo docker rmi headhuntermonitoringbot:1.0

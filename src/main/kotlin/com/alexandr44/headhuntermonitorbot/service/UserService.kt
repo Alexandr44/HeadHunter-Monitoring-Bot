@@ -14,6 +14,10 @@ class UserService(
         return userRepository.findByUserChatId(tgChatId).userState
     }
 
+    fun getUser(tgChatId: Long): User {
+        return userRepository.findByUserChatId(tgChatId)
+    }
+
     fun saveUserState(tgChatId: Long, userState: UserState) {
         userRepository.save(
             userRepository.findByUserChatId(tgChatId).apply {

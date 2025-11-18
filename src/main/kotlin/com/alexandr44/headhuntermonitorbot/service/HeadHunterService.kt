@@ -7,6 +7,7 @@ import com.alexandr44.headhuntermonitorbot.repository.UserRepository
 import com.alexandr44.headhuntermonitorbot.repository.VacancyIdRepository
 import mu.KotlinLogging
 import org.springframework.stereotype.Service
+import java.time.LocalDate
 import java.time.OffsetDateTime
 
 @Service
@@ -80,18 +81,22 @@ class HeadHunterService(
             }
 
             for (vacancy in vacancyList) {
-                if (vacancy.publishedAt.dayOfMonth != today.dayOfMonth ||
-                    vacancy.publishedAt.monthValue != today.monthValue ||
-                    vacancy.publishedAt.year != today.year
-                ) {
-                    isFinished = true
-                } else {
+                if (checkVacancyDate(vacancy)) {
                     vacancies.add(vacancy)
+                } else {
+                    isFinished = true
                 }
             }
         }
 
         return vacancies
+    }
+
+    private fun checkVacancyDate(vacancy: VacancyDto): Boolean {
+        val vacancyDate = vacancy.publishedAt.toLocalDate()
+        val today = LocalDate.now()
+        val yesterday = today.minusDays(1)
+        return vacancyDate.equals(today) || vacancyDate.equals(yesterday)
     }
 
 }

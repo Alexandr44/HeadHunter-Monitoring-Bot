@@ -132,13 +132,19 @@ class HeadHunterCommandHandler(
 
             Constants.MENU_ENTER_SEARCH_TEXT -> {
                 userService.saveUserState(userId, UserState.SEARCH_TEXT)
-                val msg = SendMessage(chatId.toString(), "ВВедите текст для поиска")
+                val msg = SendMessage(
+                    chatId.toString(),
+                    "Введите текст для поиска. Текущий: ${userService.getUser(userId).searchText}"
+                )
                 execute(msg)
             }
 
             Constants.MENU_ENTER_EXCLUDE_TEXT -> {
                 userService.saveUserState(userId, UserState.EXCLUDE_TEXT)
-                val msg = SendMessage(chatId.toString(), "ВВедите исключающие слова, через запятую")
+                val msg = SendMessage(
+                    chatId.toString(),
+                    "Введите исключающие слова, через запятую. Текущие: ${userService.getUser(userId).excludeText}"
+                )
                 execute(msg)
             }
 
