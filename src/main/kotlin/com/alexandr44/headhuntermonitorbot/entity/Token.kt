@@ -20,13 +20,13 @@ class Token(
     var userId: Long,
 
     @Column(nullable = false, name = "access_token")
-    var accessToken: String,
+    var accessToken: String? = null,
 
     @Column(nullable = false, name = "refresh_token")
-    var refreshToken: String,
+    var refreshToken: String? = null,
 
     @Column(nullable = false, name = "expired_at")
-    var expiredAt: Long,
+    var expiredAt: Long? = null,
 
     @CreatedDate
     @Column(nullable = false, updatable = false)

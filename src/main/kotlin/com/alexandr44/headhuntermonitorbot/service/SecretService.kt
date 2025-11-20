@@ -22,12 +22,12 @@ class SecretService(
     }
 
     fun getUserSecretByTgId(tgChatId: Long): Secret? {
-        val user = userService.getUser(tgChatId)
+        val user = userService.getUser(tgChatId)!!
         return secretRepository.findByUserId(user.id!!)
     }
 
     fun saveClientId(clientId: String, tgChatId: Long) {
-        val user = userService.getUser(tgChatId)
+        val user = userService.getUser(tgChatId)!!
         val secret = secretRepository.findByUserId(user.id!!)?.apply {
             this.clentId = clientId
         } ?: Secret(
