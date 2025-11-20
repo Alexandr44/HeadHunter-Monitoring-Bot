@@ -25,3 +25,8 @@ telegrambot:
     username: HeadHunterMonitorBot
     token: "<TG BOT TOKEN>"
     support_chat_id: "<SUPPORT GROUP CHAT ID>"
+
+hh:
+  redirect_url: https://hh.ru
+  grant_type_access: authorization_code
+  grant_type_refresh: refresh_token
