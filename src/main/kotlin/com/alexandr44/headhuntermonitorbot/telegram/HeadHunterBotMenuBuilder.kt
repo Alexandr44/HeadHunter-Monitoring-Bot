@@ -11,19 +11,56 @@ class HeadHunterBotMenuBuilder {
     fun mainMenu(): ReplyKeyboardMarkup {
 
         val row1 = KeyboardRow()
-        row1.add(Constants.MENU_ENTER_SEARCH_TEXT)
+        row1.add(Constants.MENU_CONFIGS)
 
         val row2 = KeyboardRow()
-        row2.add(Constants.MENU_ENTER_EXCLUDE_TEXT)
+        row2.add(Constants.MENU_CREDS)
 
         val row3 = KeyboardRow()
-        row2.add(Constants.MENU_SWITCH_MONITORING)
+        row3.add(Constants.MENU_SUPPORT)
+        row3.add(Constants.MENU_HELP)
 
-        val row4 = KeyboardRow()
-        row4.add(Constants.MENU_SUPPORT)
-        row4.add(Constants.MENU_HELP)
+        return buildReplyKeyboard(row1, row2, row3)
+    }
 
-        return buildReplyKeyboard(row1, row2, row3, row4)
+    fun searchSettingsMenu(): ReplyKeyboardMarkup {
+        val row1 = KeyboardRow().apply {
+            add(Constants.CONFIG_MENU_ENTER_SEARCH_TEXT)
+        }
+
+        val row2 = KeyboardRow().apply {
+            add(Constants.CONFIG_MENU_ENTER_EXCLUDE_TEXT)
+        }
+
+        val row3 = KeyboardRow().apply {
+            add(Constants.CONFIG_MENU_SWITCH_MONITORING)
+        }
+
+        val rowBack = KeyboardRow().apply {
+            add(Constants.MENU_BACK)
+        }
+
+        return buildReplyKeyboard(row1, row2, row3, rowBack)
+    }
+
+    fun vacancyAlgaMenu(): ReplyKeyboardMarkup {
+        val row1 = KeyboardRow().apply {
+            add(Constants.CREDS_MENU_ADD_CREDS)
+        }
+
+        val row2 = KeyboardRow().apply {
+            add(Constants.CREDS_MENU_ADD_CV_ID)
+        }
+
+        val row3 = KeyboardRow().apply {
+            add(Constants.CREDS_MENU_ADD_TEMPLATE)
+        }
+
+        val rowBack = KeyboardRow().apply {
+            add(Constants.MENU_BACK)
+        }
+
+        return buildReplyKeyboard(row1, row2, row3, rowBack)
     }
 
     private fun buildReplyKeyboard(vararg rows: KeyboardRow): ReplyKeyboardMarkup {
