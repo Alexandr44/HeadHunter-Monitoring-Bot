@@ -4,6 +4,7 @@ import com.alexandr44.headhuntermonitorbot.dto.TokenRefreshRequest
 import com.alexandr44.headhuntermonitorbot.dto.TokenRequest
 import com.alexandr44.headhuntermonitorbot.dto.response.ResumeDto
 import com.alexandr44.headhuntermonitorbot.dto.response.TokenDto
+import com.alexandr44.headhuntermonitorbot.dto.response.VacancyDto
 import com.alexandr44.headhuntermonitorbot.dto.response.VacancyResponseDto
 import feign.Headers
 import org.springframework.cloud.openfeign.FeignClient
@@ -11,6 +12,7 @@ import org.springframework.cloud.openfeign.SpringQueryMap
 import org.springframework.http.HttpHeaders
 import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
+import org.springframework.util.MultiValueMap
 import org.springframework.web.bind.annotation.*
 
 
@@ -42,8 +44,21 @@ interface HeadHunterClient {
 
     @GetMapping("/resumes/{resumeId}")
     fun getResumeById(
-        @PathVariable("resumeId") resumeId: String,
-        @RequestHeader("Authorization") bearerToken: String
+        @RequestHeader("Authorization") bearerToken: String,
+        @PathVariable("resumeId") resumeId: String
     ): ResponseEntity<ResumeDto>
+
+    @GetMapping("/vacancies/{vacancyId}")
+    fun getVacancy(@PathVariable("vacancyId") vacancyId: Long): ResponseEntity<VacancyDto>
+
+    @PostMapping(
+        value = ["/negotiations"],
+        consumes = [MediaType.MULTIPART_FORM_DATA_VALUE]
+    )
+    @Headers("${HttpHeaders.CONTENT_TYPE}: ${MediaType.MULTIPART_FORM_DATA_VALUE}")
+    fun applyToVacancy(
+        @RequestHeader("Authorization") bearerToken: String,
+        @RequestBody form: MultiValueMap<String, String>
+    ): ResponseEntity<Void>
 
 }

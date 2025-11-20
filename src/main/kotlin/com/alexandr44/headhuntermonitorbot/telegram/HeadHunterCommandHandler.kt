@@ -9,10 +9,12 @@ import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
 import org.telegram.telegrambots.meta.api.methods.botapimethods.BotApiMethodMessage
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage
+import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageReplyMarkup
 import org.telegram.telegrambots.meta.api.objects.Message
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException
+import java.io.Serializable
 
 
 @Service
@@ -190,32 +192,41 @@ class HeadHunterCommandHandler(
         }
     }
 
-    fun handleCallback(tgChatId: Long, type: String, data: String, execute: (BotApiMethodMessage) -> Message) {
+    fun handleCallback(
+        tgChatId: Long,
+        messageId: Int,
+        type: String,
+        data: String,
+        msgSender: (BotApiMethodMessage) -> Serializable,
+        msgEditor: (EditMessageReplyMarkup) -> Serializable
+    ) {
         val callbackType = Callback.valueOf(type)
         when (callbackType) {
             Callback.VACANCY -> {
-                println("Vacancy ID: $data")
-                // TODO: Call request to vacancy
+                val result = headHunterService.sendRequestToVacancy(tgChatId, data.toLong())
+                msgEditor(
+                    editButtonAfterClick(tgChatId, messageId, result)
+                )
             }
 
             Callback.CREDS_FLOW -> {
                 val user = userService.getUser(data.toLong())!!
                 when (user.userState) {
                     UserState.CREDS_CLIENT_ID -> {
-                        execute(
+                        msgSender(
                             clientIdProcess(tgChatId, SKIP)
                         )
 
                     }
 
                     UserState.CREDS_CLIENT_SECRET -> {
-                        execute(
+                        msgSender(
                             clientSecretProcess(tgChatId, SKIP)
                         )
                     }
 
                     UserState.SUPPORT_MESSAGE -> {
-                        execute(
+                        msgSender(
                             messagePatternProcess(tgChatId, SKIP)
                         )
                     }
@@ -432,6 +443,24 @@ class HeadHunterCommandHandler(
             this.chatId = tgChatId.toString()
             this.text = "Установлен шаблон сообщения: " +
                     "${userService.getUser(tgChatId)?.messagePattern}"
+        }
+    }
+
+    private fun editButtonAfterClick(chatId: Long, messageId: Int, isSuccess: Boolean): EditMessageReplyMarkup {
+        val markup = InlineKeyboardMarkup(listOf(
+            listOf(
+                InlineKeyboardButton(
+                    if (isSuccess) "✅ Отправлено" else "⚠ Не удалось отправить"
+                ).apply {
+                    callbackData = "done"
+                }
+            )
+        ))
+
+        return EditMessageReplyMarkup().apply {
+            this.chatId = chatId.toString()
+            this.messageId = messageId
+            this.replyMarkup = markup
         }
     }
 

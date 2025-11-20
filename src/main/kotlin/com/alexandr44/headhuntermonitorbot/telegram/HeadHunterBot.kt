@@ -5,8 +5,10 @@ import com.alexandr44.headhuntermonitorbot.telegram.properties.TelegramBotProper
 import mu.KotlinLogging
 import org.springframework.beans.factory.annotation.Value
 import org.telegram.telegrambots.bots.TelegramLongPollingBot
+import org.telegram.telegrambots.meta.api.methods.BotApiMethod
 import org.telegram.telegrambots.meta.api.methods.botapimethods.BotApiMethodMessage
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage
+import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageReplyMarkup
 import org.telegram.telegrambots.meta.api.objects.Message
 import org.telegram.telegrambots.meta.api.objects.Update
 
@@ -33,9 +35,18 @@ class HeadHunterBot(
                 if (items.size < 2) return
                 val type = items[0]
                 val data = items[1]
-                handler.handleCallback(update.callbackQuery.from.id, type, data) { sendMessage: BotApiMethodMessage ->
-                    execute(sendMessage)
-                }
+                handler.handleCallback(
+                    tgChatId = update.callbackQuery.from.id,
+                    messageId = update.callbackQuery.message.messageId,
+                    type = type,
+                    data = data,
+                    msgSender = { sendMessage: BotApiMethod<Message> ->
+                        execute(sendMessage)
+                    },
+                    msgEditor = { editMessage: EditMessageReplyMarkup ->
+                        execute(editMessage)
+                    }
+                )
             } else if (update.hasMessage()) {
                 val msg: Message = update.message
 
