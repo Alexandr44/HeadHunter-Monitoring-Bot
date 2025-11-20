@@ -66,4 +66,9 @@ class UserService(
         getUser(tgChatId)!!.cvId = cvId
     }
 
+    @Transactional
+    fun setMessagePattern(tgChatId: Long, messagePattern: String) {
+        getUser(tgChatId)!!.messagePattern = messagePattern
+    }
+
 }

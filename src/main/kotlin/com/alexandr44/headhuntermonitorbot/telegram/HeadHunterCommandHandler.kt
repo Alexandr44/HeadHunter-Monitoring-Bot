@@ -1,6 +1,7 @@
 package com.alexandr44.headhuntermonitorbot.telegram
 
 import com.alexandr44.headhuntermonitorbot.dto.Constants
+import com.alexandr44.headhuntermonitorbot.dto.MessagePattern.COMPANY_NAME_PLACEHOLDER
 import com.alexandr44.headhuntermonitorbot.enums.Callback
 import com.alexandr44.headhuntermonitorbot.enums.UserState
 import com.alexandr44.headhuntermonitorbot.service.*
@@ -172,6 +173,18 @@ class HeadHunterCommandHandler(
                             }
                         )
                     }
+
+                    UserState.CREDS_MESSAGE_PATTERN -> {
+                        if (!checkInputExist(text)) {
+                            resetUserState(userId)
+                            execute(buildResetMessage())
+                            return
+                        }
+
+                        execute(
+                            messagePatternProcess(userId, text)
+                        )
+                    }
                 }
             }
         }
@@ -198,6 +211,12 @@ class HeadHunterCommandHandler(
                     UserState.CREDS_CLIENT_SECRET -> {
                         execute(
                             clientSecretProcess(tgChatId, SKIP)
+                        )
+                    }
+
+                    UserState.SUPPORT_MESSAGE -> {
+                        execute(
+                            messagePatternProcess(tgChatId, SKIP)
                         )
                     }
 
@@ -310,8 +329,23 @@ class HeadHunterCommandHandler(
             }
 
             Constants.CREDS_MENU_ADD_TEMPLATE -> {
-                // TODO: Implement
-                val msg = SendMessage(chatId.toString(), "МОК - Шаблон добавлен")
+                userService.setUserState(userId, UserState.CREDS_MESSAGE_PATTERN)
+                val messagePattern = userService.getUser(chatId)?.messagePattern
+                val msg = SendMessage(
+                    chatId.toString(),
+                    "Введите шаблон сопроводительного письма. Допустимы плейсхолдеры: " +
+                            COMPANY_NAME_PLACEHOLDER +
+                            "\r\n\r\nТекущий: \r\n$messagePattern"
+                ).apply {
+                    if (messagePattern != null) {
+                        this.replyMarkup =
+                            InlineKeyboardMarkup(listOf(listOf(
+                                InlineKeyboardButton("Оставить").apply {
+                                    callbackData = "${Callback.CREDS_FLOW}:${chatId}"
+                                }
+                            )))
+                    }
+                }
                 execute(msg)
             }
 
@@ -386,6 +420,18 @@ class HeadHunterCommandHandler(
             this.chatId = tgChatId.toString()
             this.text = "Поздравляю! Доступ получен!"
             this.replyMarkup = menuBuilder.mainMenu()
+        }
+    }
+
+    private fun messagePatternProcess(tgChatId: Long, messagePattern: String): SendMessage {
+        if (messagePattern != SKIP) {
+            userService.setMessagePattern(tgChatId, messagePattern)
+        }
+        userService.setUserState(tgChatId, UserState.OK)
+        return SendMessage().apply {
+            this.chatId = tgChatId.toString()
+            this.text = "Установлен шаблон сообщения: " +
+                    "${userService.getUser(tgChatId)?.messagePattern}"
         }
     }
 

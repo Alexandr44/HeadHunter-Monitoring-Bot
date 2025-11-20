@@ -9,4 +9,5 @@ enum class UserState {
     CREDS_CLIENT_ID,
     CREDS_CLIENT_SECRET,
     CREDS_CODE,
+    CREDS_MESSAGE_PATTERN,
 }
