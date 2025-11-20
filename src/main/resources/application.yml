@@ -18,6 +18,7 @@ spring:
 
 scheduler:
   cron: "0 */30 * * * *"
+  cron: "0 */10 * * * *"
 #  cron: "*/15 * * * * *"
 
 telegrambot:
