@@ -52,7 +52,7 @@ class SecretService(
         codeMap[tgChatId] = code
     }
 
-    fun getCode(tgChatId: Long): String {
-        return codeMap.remove(tgChatId) ?: ""
+    fun getCode(tgChatId: Long): String? {
+        return codeMap.remove(tgChatId)
     }
 }
