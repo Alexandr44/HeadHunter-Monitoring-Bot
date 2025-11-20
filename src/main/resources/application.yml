@@ -17,8 +17,8 @@ spring:
     change-log: classpath:db/changelog/db.changelog-master-local.xml
 
 scheduler:
-  cron: "0 */30 * * * *"
   cron: "0 */10 * * * *"
+  refresh-cron: "0 0 0 */2 * *"
 #  cron: "*/15 * * * * *"
 
 telegrambot:
