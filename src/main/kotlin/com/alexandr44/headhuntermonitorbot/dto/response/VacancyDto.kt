@@ -1,4 +1,4 @@
-package com.alexandr44.headhuntermonitorbot.dto
+package com.alexandr44.headhuntermonitorbot.dto.response
 
 import com.fasterxml.jackson.annotation.JsonProperty
 import java.time.OffsetDateTime
@@ -14,4 +14,6 @@ data class VacancyDto(
     val salary: SalaryDto?,
     @JsonProperty("salary_range")
     val salaryRange: SalaryDto?,
+    @JsonProperty("has_test")
+    val hasTest: Boolean
 )
