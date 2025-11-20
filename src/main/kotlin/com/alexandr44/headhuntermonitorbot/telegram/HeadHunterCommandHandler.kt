@@ -443,6 +443,7 @@ class HeadHunterCommandHandler(
             this.chatId = tgChatId.toString()
             this.text = "Установлен шаблон сообщения: " +
                     "${userService.getUser(tgChatId)?.messagePattern}"
+            this.replyMarkup = menuBuilder.mainMenu()
         }
     }
 

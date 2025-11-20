@@ -13,13 +13,7 @@ class TelegramService(
     private val telegramBot: TelegramLongPollingBot
 ) {
 
-    fun sendVacancies(vacancyDtoList: List<VacancyDto>, chatId: Long) {
-        for (vacancy in vacancyDtoList) {
-            sendVacancy(vacancy, chatId)
-        }
-    }
-
-    private fun sendVacancy(vacancyDto: VacancyDto, chatId: Long) {
+    fun sendVacancy(vacancyDto: VacancyDto, chatId: Long) {
         val salaryMsg =
             if (vacancyDto.salary != null) {
                 "от ${vacancyDto.salary.from} до ${vacancyDto.salary.to}"

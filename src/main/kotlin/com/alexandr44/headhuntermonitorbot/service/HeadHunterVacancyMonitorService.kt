@@ -50,16 +50,16 @@ class HeadHunterVacancyMonitorService(
                     .filter { vacancyDto -> !checkedVacanciesIds.contains(vacancyDto.id) }
 
                 log.info("Vacancies: ${vacancies.size}")
-                telegramService.sendVacancies(vacancies, user.userChatId)
 
-                vacancyIdRepository.saveAll(
-                    vacancies.map { vacancy ->
+                for (vacancy in vacancies) {
+                    telegramService.sendVacancy(vacancy, user.userChatId)
+                    vacancyIdRepository.save(
                         VacancyId(
                             vacancyId = vacancy.id,
                             userId = user.id!!,
                         )
-                    }
-                )
+                    )
+                }
             }
         }
     }
