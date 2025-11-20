@@ -14,4 +14,9 @@ class HeadHunterScheduler(
         headHunterVacancyMonitorService.checkVacancies()
     }
 
+    @Scheduled(cron = "\${scheduler.refresh-cron}")
+    fun scheduleRefreshToken() {
+        headHunterVacancyMonitorService.refreshTokens()
+    }
+
 }

@@ -26,6 +26,10 @@ class SecretService(
         return secretRepository.findByUserId(user.id!!)
     }
 
+    fun getUserSecretByUserId(userId: Long): Secret? {
+        return secretRepository.findByUserId(userId)
+    }
+
     fun saveClientId(clientId: String, tgChatId: Long) {
         val user = userService.getUser(tgChatId)!!
         val secret = secretRepository.findByUserId(user.id!!)?.apply {
