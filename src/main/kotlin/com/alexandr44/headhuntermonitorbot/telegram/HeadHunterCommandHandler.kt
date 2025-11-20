@@ -1,13 +1,16 @@
 package com.alexandr44.headhuntermonitorbot.telegram
 
 import com.alexandr44.headhuntermonitorbot.dto.Constants
+import com.alexandr44.headhuntermonitorbot.enums.Callback
 import com.alexandr44.headhuntermonitorbot.enums.UserState
-import com.alexandr44.headhuntermonitorbot.service.UserService
+import com.alexandr44.headhuntermonitorbot.service.*
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
 import org.telegram.telegrambots.meta.api.methods.botapimethods.BotApiMethodMessage
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage
 import org.telegram.telegrambots.meta.api.objects.Message
+import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup
+import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException
 
 
@@ -15,7 +18,15 @@ import org.telegram.telegrambots.meta.exceptions.TelegramApiException
 class HeadHunterCommandHandler(
     private val menuBuilder: HeadHunterBotMenuBuilder,
     private val userService: UserService,
+    private val secretService: SecretService,
+    private val tokenService: TokenService,
+    private val authService: AuthService,
+    private val headHunterService: HeadHunterService
 ) {
+
+    companion object {
+        private const val SKIP = "SKIP";
+    }
 
     @Value("\${telegrambot.bot.support_chat_id}")
     private lateinit var supportChatId: String
@@ -57,7 +68,7 @@ class HeadHunterCommandHandler(
 
                     UserState.SEARCH_TEXT -> {
                         userService.setSearchText(userId, text)
-                        userService.saveUserState(userId, UserState.OK)
+                        userService.setUserState(userId, UserState.OK)
                         execute(
                             SendMessage().apply {
                                 this.chatId = chatId.toString()
@@ -69,7 +80,7 @@ class HeadHunterCommandHandler(
 
                     UserState.EXCLUDE_TEXT -> {
                         userService.setExcludeText(userId, text)
-                        userService.saveUserState(userId, UserState.OK)
+                        userService.setUserState(userId, UserState.OK)
                         execute(
                             SendMessage().apply {
                                 this.chatId = chatId.toString()
@@ -94,9 +105,103 @@ class HeadHunterCommandHandler(
                                 this.replyMarkup = menuBuilder.mainMenu()
                             }
                         )
-                        userService.saveUserState(userId, UserState.OK)
+                        userService.setUserState(userId, UserState.OK)
                         execute(SendMessage(chatId.toString(), "✅ Сообщение отправлено в поддержку. Спасибо!"))
                     }
+
+                    UserState.CV_ID -> {
+                        headHunterService.checkResumeExist(text, chatId)
+                        userService.setCvId(userId, text)
+                        userService.setUserState(userId, UserState.OK)
+                        execute(
+                            SendMessage().apply {
+                                this.chatId = chatId.toString()
+                                this.text = "ID резюме: $text"
+                                this.replyMarkup = menuBuilder.mainMenu()
+                            }
+                        )
+                    }
+
+                    UserState.CREDS_CLIENT_ID -> {
+                        if (!checkInputExist(text)) {
+                            resetUserState(userId)
+                            execute(buildResetMessage())
+                            return
+                        }
+
+                        execute(
+                            clientIdProcess(userId, text)
+                        )
+                    }
+
+                    UserState.CREDS_CLIENT_SECRET -> {
+                        if (!checkInputExist(text)) {
+                            resetUserState(userId)
+                            execute(buildResetMessage())
+                            return
+                        }
+
+                        execute(
+                            clientSecretProcess(userId, text)
+                        )
+                    }
+
+                    UserState.CREDS_CODE -> {
+                        if (!checkInputExist(text)) {
+                            resetUserState(userId)
+                            execute(buildResetMessage())
+                            return
+                        }
+
+                        secretService.saveCode(text, userId)
+                        userService.setUserState(userId, UserState.CREDS_CLIENT_SECRET)
+                        val secret = secretService.getUserSecretByTgId(userId)
+                        execute(
+                            SendMessage().apply {
+                                this.chatId = chatId.toString()
+                                this.text = "Супер! Теперь введите CLIENT SECRET и сможем проверить доступ, текущий " +
+                                        "${secret?.clientSecret}"
+                                if (secret?.clientSecret != null) {
+                                    this.replyMarkup =
+                                        InlineKeyboardMarkup(listOf(listOf(
+                                            InlineKeyboardButton("Оставить").apply {
+                                                callbackData = "${Callback.CREDS_FLOW}:${chatId}"
+                                            }
+                                        )))
+                                }
+                            }
+                        )
+                    }
+                }
+            }
+        }
+    }
+
+    fun handleCallback(tgChatId: Long, type: String, data: String, execute: (BotApiMethodMessage) -> Message) {
+        val callbackType = Callback.valueOf(type)
+        when (callbackType) {
+            Callback.VACANCY -> {
+                println("Vacancy ID: $data")
+                // TODO: Call request to vacancy
+            }
+
+            Callback.CREDS_FLOW -> {
+                val user = userService.getUser(data.toLong())!!
+                when (user.userState) {
+                    UserState.CREDS_CLIENT_ID -> {
+                        execute(
+                            clientIdProcess(tgChatId, SKIP)
+                        )
+
+                    }
+
+                    UserState.CREDS_CLIENT_SECRET -> {
+                        execute(
+                            clientSecretProcess(tgChatId, SKIP)
+                        )
+                    }
+
+                    else -> {}
                 }
             }
         }
@@ -130,27 +235,83 @@ class HeadHunterCommandHandler(
     ): Boolean {
         when (text) {
 
-            Constants.MENU_ENTER_SEARCH_TEXT -> {
-                userService.saveUserState(userId, UserState.SEARCH_TEXT)
+            Constants.MENU_CONFIGS -> {
+                val msg = SendMessage(chatId.toString(), Constants.MENU_CONFIGS)
+                msg.replyMarkup = menuBuilder.searchSettingsMenu()
+                execute(msg)
+            }
+
+            Constants.MENU_CREDS -> {
+                val msg = SendMessage(chatId.toString(), Constants.MENU_CREDS)
+                msg.replyMarkup = menuBuilder.vacancyAlgaMenu()
+                execute(msg)
+            }
+
+            Constants.CONFIG_MENU_ENTER_SEARCH_TEXT -> {
+                userService.setUserState(userId, UserState.SEARCH_TEXT)
                 val msg = SendMessage(
                     chatId.toString(),
-                    "Введите текст для поиска. Текущий: ${userService.getUser(userId).searchText}"
+                    "Введите текст для поиска. Текущий: ${userService.getUser(userId)!!.searchText}"
                 )
                 execute(msg)
             }
 
-            Constants.MENU_ENTER_EXCLUDE_TEXT -> {
-                userService.saveUserState(userId, UserState.EXCLUDE_TEXT)
+            Constants.CONFIG_MENU_ENTER_EXCLUDE_TEXT -> {
+                userService.setUserState(userId, UserState.EXCLUDE_TEXT)
                 val msg = SendMessage(
                     chatId.toString(),
-                    "Введите исключающие слова, через запятую. Текущие: ${userService.getUser(userId).excludeText}"
+                    "Введите исключающие слова, через запятую. Текущие: ${userService.getUser(userId)!!.excludeText}"
                 )
                 execute(msg)
             }
 
-            Constants.MENU_SWITCH_MONITORING -> {
-                val enabled = userService.switchUser(userId)
+            Constants.CONFIG_MENU_SWITCH_MONITORING -> {
+                val enabled = userService.switchMonitoringUser(userId)
                 val msg = SendMessage(chatId.toString(), "Мониторинг " + if (enabled) "включен" else "отключен")
+                execute(msg)
+            }
+
+            Constants.CREDS_MENU_ADD_CV_ID -> {
+                val token = tokenService.getTokenByTgId(userId)
+                if (token?.accessToken == null) {
+                    val msg = SendMessage(
+                        chatId.toString(),
+                        "Сначала введите креды, проверка резюме невозможна"
+                    )
+                    execute(msg)
+                    return true
+                }
+
+                userService.setUserState(userId, UserState.CV_ID)
+                val msg = SendMessage(
+                    chatId.toString(),
+                    "Введите ID своего резюме. Текущий: ${userService.getUser(userId)!!.cvId}"
+                )
+                execute(msg)
+            }
+
+            Constants.CREDS_MENU_ADD_CREDS -> {
+                userService.setUserState(userId, UserState.CREDS_CLIENT_ID)
+                val secret = secretService.getUserSecretByTgId(userId)
+                val msg = SendMessage(
+                    chatId.toString(),
+                    "Введите CLIENT ID. Текущий: ${secret?.clentId}"
+                ).apply {
+                    if (secret?.clentId != null) {
+                        this.replyMarkup =
+                            InlineKeyboardMarkup(listOf(listOf(
+                                InlineKeyboardButton("Оставить").apply {
+                                    callbackData = "${Callback.CREDS_FLOW}:${chatId}"
+                                }
+                            )))
+                    }
+                }
+                execute(msg)
+            }
+
+            Constants.CREDS_MENU_ADD_TEMPLATE -> {
+                // TODO: Implement
+                val msg = SendMessage(chatId.toString(), "МОК - Шаблон добавлен")
                 execute(msg)
             }
 
@@ -160,7 +321,7 @@ class HeadHunterCommandHandler(
                         |Мы ответим вам как можно скорее.
                         """.trimMargin()
                 val msg = SendMessage(chatId.toString(), str)
-                userService.saveUserState(userId, UserState.SUPPORT_MESSAGE)
+                userService.setUserState(userId, UserState.SUPPORT_MESSAGE)
                 execute(msg)
             }
 
@@ -172,6 +333,12 @@ class HeadHunterCommandHandler(
                 execute(msg)
             }
 
+            Constants.MENU_BACK -> {
+                val msg = SendMessage(chatId.toString(), "Главное меню")
+                msg.replyMarkup = menuBuilder.mainMenu()
+                execute(msg)
+            }
+
             else -> {
                 return false
             }
@@ -179,5 +346,47 @@ class HeadHunterCommandHandler(
         return true
     }
 
+    private fun checkInputExist(text: String): Boolean {
+        return !(text.isEmpty() || text.isBlank() || text == "-")
+    }
+
+    private fun resetUserState(userId: Long) {
+        userService.setUserState(userId, UserState.OK)
+    }
+
+    private fun buildResetMessage(): SendMessage {
+        return SendMessage().apply {
+            this.chatId = chatId
+            this.text = "Введено пустое значение, процесс прерван"
+            this.replyMarkup = menuBuilder.mainMenu()
+        }
+    }
+
+    private fun clientIdProcess(tgChatId: Long, clientId: String): SendMessage {
+        if (clientId != SKIP) {
+            secretService.saveClientId(clientId, tgChatId)
+        }
+        userService.setUserState(tgChatId, UserState.CREDS_CODE)
+        val url = String.format(SecretService.AUTH_URL_PATTERN, secretService.getUserSecretByTgId(tgChatId)!!.clentId)
+        return SendMessage().apply {
+            this.chatId = tgChatId.toString()
+            this.text = "Отлично\\! Теперь пройдите по ссылке, " +
+                    "авторизуйтесь и пришлите полученный code: [ТЫК]($url)"
+            this.enableMarkdownV2(true)
+        }
+    }
+
+    private fun clientSecretProcess(tgChatId: Long, clientSecret: String): SendMessage {
+        if (clientSecret != SKIP) {
+            secretService.saveClientSecret(clientSecret, tgChatId)
+        }
+        userService.setUserState(tgChatId, UserState.OK)
+        authService.requestAccessToken(tgChatId)
+        return SendMessage().apply {
+            this.chatId = tgChatId.toString()
+            this.text = "Поздравляю! Доступ получен!"
+            this.replyMarkup = menuBuilder.mainMenu()
+        }
+    }
 
 }

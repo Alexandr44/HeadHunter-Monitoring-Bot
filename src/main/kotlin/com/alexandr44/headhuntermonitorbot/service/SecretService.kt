@@ -39,7 +39,7 @@ class SecretService(
 
     fun saveClientSecret(clientSecret: String, tgChatId: Long) {
         getUserSecretByTgId(tgChatId)!!.apply {
-            this.clentId = clientSecret
+            this.clientSecret = clientSecret
             saveSecret(this)
         }
     }
