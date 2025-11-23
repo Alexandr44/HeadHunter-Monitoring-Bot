@@ -1,5 +1,7 @@
 server:
   port: 9090
+  config:
+    import: "optional:file:/config/application-prod.yml"
 
 spring:
   application:

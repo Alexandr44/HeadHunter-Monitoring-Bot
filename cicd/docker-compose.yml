@@ -14,6 +14,8 @@ services:
       # Локальное время сервера
       - /etc/localtime:/etc/localtime:ro
 
+      - /usr/projects/hh_monitor/config:/config
+
     environment:
       SPRING_PROFILES_ACTIVE: "prod"
       # TELEGRAM_TOKEN: ${TELEGRAM_TOKEN}
