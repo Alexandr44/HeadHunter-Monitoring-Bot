@@ -1,17 +1,22 @@
 package com.alexandr44.headhuntermonitorbot.scheduler
 
-import com.alexandr44.headhuntermonitorbot.service.HeadHunterService
+import com.alexandr44.headhuntermonitorbot.service.HeadHunterVacancyMonitorService
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Service
 
 @Service
 class HeadHunterScheduler(
-    val headHunterService: HeadHunterService
+    val headHunterVacancyMonitorService: HeadHunterVacancyMonitorService
 ) {
 
     @Scheduled(cron = "\${scheduler.cron}")
     fun schedule() {
-        headHunterService.checkVacancies()
+        headHunterVacancyMonitorService.checkVacancies()
+    }
+
+    @Scheduled(cron = "\${scheduler.refresh-cron}")
+    fun scheduleRefreshToken() {
+        headHunterVacancyMonitorService.refreshTokens()
     }
 
 }

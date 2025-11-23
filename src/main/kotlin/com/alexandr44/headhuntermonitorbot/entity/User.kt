@@ -36,6 +36,12 @@ class User(
     @Column(nullable = false, name = "user_state", length = 255)
     var userState: UserState,
 
+    @Column(name = "cv_id", length = 255)
+    var cvId: String? = null,
+
+    @Column(name = "message_pattern", length = 255)
+    var messagePattern: String? = null,
+
     @CreatedDate
     @Column(nullable = false, updatable = false)
     var createdAt: Instant? = null,

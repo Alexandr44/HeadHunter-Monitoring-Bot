@@ -4,7 +4,13 @@
                    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
                    https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
 
-    <include file="/db/changelog/V1.0.0/2025-11-13-init-db.xml"/>
-    <include file="/db/changelog/V1.0.0/2025-11-19-add_fields_to_user.xml"/>
-    <include file="/db/changelog/V1.0.0/2025-11-20-add_tables.xml"/>
+    <changeSet id="2025-11-19-add_fields_to_user" author="alexandr.glukhov">
+        <sql>
+            ALTER TABLE users
+                ADD cv_id VARCHAR(255);
+
+            ALTER TABLE users
+                ADD message_pattern VARCHAR(5000);
+        </sql>
+    </changeSet>
 </databaseChangeLog>

@@ -1,3 +1,6 @@
+server:
+  port: 9090
+
 spring:
   application:
     name: HeadHunterMonitorBot
@@ -14,7 +17,8 @@ spring:
     change-log: classpath:db/changelog/db.changelog-master-local.xml
 
 scheduler:
-  cron: "0 */30 * * * *"
+  cron: "0 */10 * * * *"
+  refresh-cron: "0 0 0 */2 * *"
 #  cron: "*/15 * * * * *"
 
 telegrambot:
@@ -22,3 +26,8 @@ telegrambot:
     username: HeadHunterMonitorBot
     token: "<TG BOT TOKEN>"
     support_chat_id: "<SUPPORT GROUP CHAT ID>"
+
+hh:
+  redirect_url: https://hh.ru
+  grant_type_access: authorization_code
+  grant_type_refresh: refresh_token

@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                   https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <changeSet id="2025-11-20-add_tables" author="alexandr.glukhov">
+        <sql>
+            CREATE TABLE secrets
+            (
+                id            INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id       BIGINT       NOT NULL,
+                clent_id      VARCHAR(255),
+                client_secret VARCHAR(255),
+                created_at    TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at    TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            );
+
+            CREATE TABLE tokens
+            (
+                id            INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id       BIGINT NOT NULL,
+                access_token  BIGINT NOT NULL,
+                refresh_token BIGINT NOT NULL,
+                expired_at    BIGINT NOT NULL,
+                created_at    TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at    TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            );
+        </sql>
+    </changeSet>
+</databaseChangeLog>

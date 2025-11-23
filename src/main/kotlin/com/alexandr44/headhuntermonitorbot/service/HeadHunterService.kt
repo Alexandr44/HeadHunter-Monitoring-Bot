@@ -1,97 +1,58 @@
 package com.alexandr44.headhuntermonitorbot.service
 
 import com.alexandr44.headhuntermonitorbot.client.HeadHunterClient
-import com.alexandr44.headhuntermonitorbot.dto.VacancyDto
-import com.alexandr44.headhuntermonitorbot.entity.VacancyId
-import com.alexandr44.headhuntermonitorbot.repository.UserRepository
-import com.alexandr44.headhuntermonitorbot.repository.VacancyIdRepository
+import com.alexandr44.headhuntermonitorbot.dto.MessagePattern
+import com.alexandr44.headhuntermonitorbot.exception.BotLogicException
 import mu.KotlinLogging
 import org.springframework.stereotype.Service
-import java.time.OffsetDateTime
+import org.springframework.util.LinkedMultiValueMap
 
 @Service
 class HeadHunterService(
     private val headHunterClient: HeadHunterClient,
-    private val userRepository: UserRepository,
-    private val vacancyIdRepository: VacancyIdRepository,
-    private val telegramService: TelegramService
+    private val tokenService: TokenService,
+    private val userService: UserService
 ) {
 
     companion object {
-        private const val SCHEDULE = "remote"
-        private const val ORDER = "publication_time"
-        private const val PAGE_SIZE = 50
+        private const val BEARER_PATTERN = "Bearer %s"
     }
 
     private val log = KotlinLogging.logger {}
 
-    fun checkVacancies() {
-        val users = userRepository.findAllByActiveIsTrue()
-
-        for (user in users) {
-            if (user.searchText.isBlank()) {
-                continue
-            }
-
-            val texts = user.searchText.split(";").map { it.trim() }
-            for (text in texts) {
-                log.info("Processing users: ${user.username}")
-                val checkedVacanciesIds = vacancyIdRepository.findAllByUserId(user.id!!).map { it.vacancyId }
-
-                val excludeWords = user.excludeText.split(",").map { it.trim() }
-                val vacancies = getVacanciesForToday(text)
-                    .filter { vacancyDto -> !excludeWords.any { vacancyDto.name.contains(it, ignoreCase = true) } }
-                    .filter { vacancyDto -> !checkedVacanciesIds.contains(vacancyDto.id) }
-
-                log.info("Vacancies: ${vacancies.size}")
-                telegramService.sendVacancies(vacancies, user.userChatId)
-
-                vacancyIdRepository.saveAll(
-                    vacancies.map { vacancy ->
-                        VacancyId(
-                            vacancyId = vacancy.id,
-                            userId = user.id!!,
-                        )
-                    }
-                )
-            }
-        }
+    fun checkResumeExist(resumeId: String, tgUserId: Long): Boolean {
+        val token = tokenService.getTokenByTgId(tgUserId)!!
+        val response = headHunterClient.getResumeById(
+            String.format(BEARER_PATTERN, token.accessToken),
+            resumeId
+        )
+        return response.statusCode.is2xxSuccessful
     }
 
-    private fun getVacanciesForToday(text: String): List<VacancyDto> {
-        val vacancies: MutableList<VacancyDto> = mutableListOf()
-        val today = OffsetDateTime.now()
+    fun sendRequestToVacancy(tgChatId: Long, vacancyId: Long): Boolean {
+        val user = userService.getUser(tgChatId)!!
 
-        var isFinished = false
-        var page = 0;
-
-        while (!isFinished) {
-            val response = headHunterClient.getVacancies(
-                text,
-                SCHEDULE,
-                ORDER,
-                PAGE_SIZE,
-                page++
-            )
-            val vacancyList = response.body?.items
-            if (vacancyList == null) {
-                isFinished = true
-                continue
-            }
-
-            for (vacancy in vacancyList) {
-                if (vacancy.publishedAt.dayOfMonth != today.dayOfMonth ||
-                    vacancy.publishedAt.monthValue != today.monthValue ||
-                    vacancy.publishedAt.year != today.year
-                ) {
-                    isFinished = true
-                } else {
-                    vacancies.add(vacancy)
-                }
-            }
+        val response = headHunterClient.getVacancy(vacancyId)
+        if (!response.statusCode.is2xxSuccessful) {
+            log.error { "Vacancy $vacancyId not found, response code ${response.statusCode}, body ${response.body}" }
+            throw BotLogicException("Vacancy $vacancyId not found, status code: ${response.statusCode}")
         }
+        val vacancy = response.body!!
 
-        return vacancies
+        val messagePattern = user.messagePattern ?: throw BotLogicException("Message pattern missing")
+        val message = messagePattern.replace(MessagePattern.COMPANY_NAME_PLACEHOLDER, vacancy.employer.name)
+
+        val token = tokenService.getTokenByTgId(tgChatId)!!
+        val applyResponse = headHunterClient.applyToVacancy(
+            String.format(BEARER_PATTERN, token.accessToken),
+            LinkedMultiValueMap<String, String>().apply {
+                add("resume_id", user.cvId ?: throw BotLogicException("Cv ID missing"))
+                add("vacancy_id", vacancyId.toString())
+                add("message", message)
+            }
+        )
+
+        return applyResponse.statusCode.is2xxSuccessful
     }
 
 }
