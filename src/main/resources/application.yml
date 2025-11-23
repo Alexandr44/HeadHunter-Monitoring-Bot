@@ -1,11 +1,11 @@
 server:
   port: 9090
-  config:
-    import: "optional:file:/config/application-prod.yml"
 
 spring:
   application:
     name: HeadHunterMonitorBot
+  config:
+    import: "optional:file:/config/application-prod.yml"
 
   datasource:
     driver-class-name: org.sqlite.JDBC
