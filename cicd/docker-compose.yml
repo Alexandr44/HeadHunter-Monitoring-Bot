@@ -14,7 +14,7 @@ services:
       # Локальное время сервера
       - /etc/localtime:/etc/localtime:ro
 
-      - /usr/projects/hh_monitor/config:/config
+      - /usr/projects/hh-monitor/configs:/configs
 
     environment:
       SPRING_PROFILES_ACTIVE: "prod"

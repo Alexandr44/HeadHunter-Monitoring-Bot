@@ -5,7 +5,7 @@ spring:
   application:
     name: HeadHunterMonitorBot
   config:
-    import: "optional:file:/config/application-prod.yml"
+    import: "optional:file:/configs/application-prod.yml"
 
   datasource:
     driver-class-name: org.sqlite.JDBC

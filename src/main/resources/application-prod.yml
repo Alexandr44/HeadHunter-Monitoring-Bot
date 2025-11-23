@@ -1,2 +1,0 @@
-scheduler:
-  cron: "0 */4 * * * *"
