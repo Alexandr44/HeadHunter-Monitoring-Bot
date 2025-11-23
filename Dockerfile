@@ -21,4 +21,4 @@ COPY build/libs/*.jar app.jar
 #ENV TELEGRAM_USERNAME=""
 
 # Запуск Spring Boot-приложения
-ENTRYPOINT ["java", "-jar", "/app/app.jar"]
+ENTRYPOINT ["java", "-jar", "app.jar"]
