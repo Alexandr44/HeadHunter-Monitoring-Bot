@@ -360,6 +360,16 @@ class HeadHunterCommandHandler(
                 execute(msg)
             }
 
+            Constants.CREDS_MENU_AUTO_REPLY -> {
+                val enabled = userService.switchAutoReply(userId)
+                val msg = SendMessage(
+                    chatId.toString(),
+                    "Авто-отклик " + (if (enabled) "включен" else "отключен") +
+                            "\r\nпс. Авто-отклик сработает для вакансии, если в её имени будет строка поиска"
+                )
+                execute(msg)
+            }
+
             Constants.MENU_SUPPORT -> {
                 val str = """
                         |🧑‍💻 Напишите сообщение в поддержку.

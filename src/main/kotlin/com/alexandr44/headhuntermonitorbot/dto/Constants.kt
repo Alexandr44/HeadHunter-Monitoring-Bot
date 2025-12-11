@@ -15,5 +15,6 @@ object Constants {
     const val CREDS_MENU_ADD_CV_ID = "Добавить id резюме"
     const val CREDS_MENU_ADD_CREDS = "Добавить свои креды"
     const val CREDS_MENU_ADD_TEMPLATE = "Добавить шаблон сопр. письма"
+    const val CREDS_MENU_AUTO_REPLY = "Вкл/Выкл авто-отклик"
 
 }

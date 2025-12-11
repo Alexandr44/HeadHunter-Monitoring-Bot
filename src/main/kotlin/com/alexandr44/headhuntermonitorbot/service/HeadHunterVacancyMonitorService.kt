@@ -2,6 +2,8 @@ package com.alexandr44.headhuntermonitorbot.service
 
 import com.alexandr44.headhuntermonitorbot.client.HeadHunterClient
 import com.alexandr44.headhuntermonitorbot.dto.response.VacancyDto
+import com.alexandr44.headhuntermonitorbot.entity.AutoReplyResult
+import com.alexandr44.headhuntermonitorbot.entity.User
 import com.alexandr44.headhuntermonitorbot.entity.VacancyId
 import com.alexandr44.headhuntermonitorbot.repository.TokenRepository
 import com.alexandr44.headhuntermonitorbot.repository.UserRepository
@@ -21,6 +23,7 @@ class HeadHunterVacancyMonitorService(
     private val telegramService: TelegramService,
     private val tokenRepository: TokenRepository,
     private val authService: AuthService,
+    private val headHunterService: HeadHunterService,
 ) {
 
     companion object {
@@ -41,7 +44,7 @@ class HeadHunterVacancyMonitorService(
 
             val texts = user.searchText.split(";").map { it.trim() }
             for (text in texts) {
-                log.info("Processing users: ${user.username}")
+                log.info("Processing users: ${user.username}, searching: $text")
                 val checkedVacanciesIds = vacancyIdRepository.findAllByUserId(user.id!!).map { it.vacancyId }
 
                 val excludeWords = user.excludeText.split(",").map { it.trim() }
@@ -52,7 +55,8 @@ class HeadHunterVacancyMonitorService(
                 log.info("Vacancies: ${vacancies.size}")
 
                 for (vacancy in vacancies) {
-                    telegramService.sendVacancy(vacancy, user.userChatId)
+                    val autoReplyResult = checkForAutoReply(user, vacancy, text)
+                    telegramService.sendVacancy(vacancy, user.userChatId, autoReplyResult)
                     vacancyIdRepository.save(
                         VacancyId(
                             vacancyId = vacancy.id,
@@ -61,6 +65,27 @@ class HeadHunterVacancyMonitorService(
                     )
                 }
             }
+        }
+    }
+
+    @Transactional
+    fun refreshTokens() {
+        log.info("Refreshing tokens")
+        val tokenList = tokenRepository.findAll()
+        for (token in tokenList) {
+            if (token.refreshToken.isNullOrEmpty()) {
+                continue
+            }
+            val expiration = Instant.ofEpochSecond(token.expiredAt!!)
+            if (expiration.minus(2, ChronoUnit.DAYS).isAfter(Instant.now())) {
+                continue
+            }
+
+            val tokenDto = authService.refreshAccessToken(token.userId, token.refreshToken!!)
+            token.accessToken = tokenDto.accessToken
+            token.refreshToken = tokenDto.refreshToken
+            token.expiredAt = System.currentTimeMillis() / 1000 + tokenDto.expiresIn
+            log.info("Refreshed token of user: ${token.userId}")
         }
     }
 
@@ -103,25 +128,31 @@ class HeadHunterVacancyMonitorService(
         return vacancyDate.equals(today) || vacancyDate.equals(yesterday)
     }
 
-    @Transactional
-    fun refreshTokens() {
-        log.info("Refreshing tokens")
-        val tokenList = tokenRepository.findAll()
-        for (token in tokenList) {
-            if (token.refreshToken.isNullOrEmpty()) {
-                continue
-            }
-            val expiration = Instant.ofEpochSecond(token.expiredAt!!)
-            if (expiration.minus(2, ChronoUnit.DAYS).isAfter(Instant.now())) {
-                continue
+    private fun checkForAutoReply(user: User, vacancy: VacancyDto, searchText: String): AutoReplyResult {
+        if (user.autoReplyEnabled) {
+            if (vacancy.hasTest) {
+                return AutoReplyResult.NONE
             }
 
-            val tokenDto = authService.refreshAccessToken(token.userId, token.refreshToken!!)
-            token.accessToken = tokenDto.accessToken
-            token.refreshToken = tokenDto.refreshToken
-            token.expiredAt = System.currentTimeMillis() / 1000 + tokenDto.expiresIn
-            log.info("Refreshed token of user: ${token.userId}")
+            if (vacancy.name.contains(searchText, ignoreCase = true)) {
+                log.info(
+                    "Sending auto-reply for user: ${user.userChatId} by searching: $searchText " +
+                            "for vacancy: ${vacancy.id}"
+                )
+                try {
+                    val result = headHunterService.sendRequestToVacancy(user.userChatId, vacancy.id)
+                    return if (result) AutoReplyResult.SUCCESS else AutoReplyResult.FAILED
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                    log.error {
+                        "Got exception, while sending auto reply for user: ${user.userChatId} " +
+                                "by searching: $searchText for vacancy: ${vacancy.id}, error: ${e.message}"
+                    }
+                    return AutoReplyResult.FAILED
+                }
+            }
         }
+        return AutoReplyResult.NONE
     }
 
 }

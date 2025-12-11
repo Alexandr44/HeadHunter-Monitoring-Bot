@@ -42,6 +42,9 @@ class User(
     @Column(name = "message_pattern", length = 255)
     var messagePattern: String? = null,
 
+    @Column(nullable = false, name = "auto_reply_enabled")
+    var autoReplyEnabled: Boolean = false,
+
     @CreatedDate
     @Column(nullable = false, updatable = false)
     var createdAt: Instant? = null,

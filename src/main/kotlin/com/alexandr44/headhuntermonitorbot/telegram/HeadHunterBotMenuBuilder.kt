@@ -56,11 +56,15 @@ class HeadHunterBotMenuBuilder {
             add(Constants.CREDS_MENU_ADD_TEMPLATE)
         }
 
+        val row4 = KeyboardRow().apply {
+            add(Constants.CREDS_MENU_AUTO_REPLY)
+        }
+
         val rowBack = KeyboardRow().apply {
             add(Constants.MENU_BACK)
         }
 
-        return buildReplyKeyboard(row1, row2, row3, rowBack)
+        return buildReplyKeyboard(row1, row2, row3, row4, rowBack)
     }
 
     private fun buildReplyKeyboard(vararg rows: KeyboardRow): ReplyKeyboardMarkup {

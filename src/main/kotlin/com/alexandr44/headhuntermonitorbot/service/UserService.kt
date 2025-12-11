@@ -47,6 +47,14 @@ class UserService(
     }
 
     @Transactional
+    fun switchAutoReply(tgChatId: Long): Boolean {
+        getUser(tgChatId)!!.let {
+            it.autoReplyEnabled = !it.autoReplyEnabled
+            return it.autoReplyEnabled
+        }
+    }
+
+    @Transactional
     fun setUserState(tgChatId: Long, userState: UserState) {
         getUser(tgChatId)!!.userState = userState
     }

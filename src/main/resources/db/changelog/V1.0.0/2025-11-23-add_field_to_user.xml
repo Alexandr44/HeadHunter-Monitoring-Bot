@@ -4,8 +4,10 @@
                    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
                    https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
 
-    <include file="/db/changelog/V1.0.0/2025-11-13-init-db.xml"/>
-    <include file="/db/changelog/V1.0.0/2025-11-19-add_fields_to_user.xml"/>
-    <include file="/db/changelog/V1.0.0/2025-11-20-add_tables.xml"/>
-    <include file="/db/changelog/V1.0.0/2025-11-23-add_field_to_user.xml"/>
+    <changeSet id="2025-11-23-add_field_to_user" author="alexandr.glukhov">
+        <sql>
+            ALTER TABLE users
+                ADD auto_reply_enabled BOOLEAN NOT NULL DEFAULT FALSE;
+        </sql>
+    </changeSet>
 </databaseChangeLog>
